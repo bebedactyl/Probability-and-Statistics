@@ -1,0 +1,166 @@
+---
+title: "Problem Set 8"
+author: "Megan Hoeksema"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggpubr)
+library(foreign)
+```
+
+## Introduction
+
+Please complete the following tasks regarding the data in R. Please generate a solution document in R markdown and upload the .Rmd document and a rendered  .doc, .docx, or .pdf document.  Your work should be based  on the data's being in the same folder as the .Rmd file. Please turn in your work on Canvas. Your solution document should have your answers to the questions and should display the requested plots. Each part is worth 10 points.
+
+These questions were rendered in R markdown through RStudio (<https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf>, <http://rmarkdown.rstudio.com> ).
+
+## 1
+
+Recall that if $Z$ is a random variable with the standard Normal distribution, then the distribution of $Z^2$ (the result of applying the function $f(z)=z^2$ to the outcomes of $Z$) has a $\chi^2_1$ distribution. If $Z_1,Z_2,...Z_n$ are independent random variables with the standard Normal distribution, then the distribution of $\sum_{i=1}^nZ_i^2$  is a $\chi^2_n$ distribution.
+
+Also, recall the fact from the week 5 slides that if $X$ and $Y$ are random variables and $Y=g(X)$ then $E_X[g(X)]=E_Y[Y]$. 
+
+### 1.a
+
+(5 points)
+
+Please compute the expected value of $\chi^2_1$, the $\chi^2$ distribution with 1 degree of freedom. 
+
+$$ Var[X] = E[X^2] - (E[X])^2$$
+$$ E[\chi^2_1]E[Z^2] = Var[Z] + (E[Z])^2$$
+$$ E[\chi^2_1]E[Z^2] = 0 + 1 = 1$$
+
+
+### 1.b
+
+(5 points)
+
+Based on your answer to 1.a, please compute the expected value of $\chi^2_n$, the $\chi^2$ distribution with n degrees of freedom. 
+
+$$ \chi^2_n = \sum_{i=1}^n Z_i^2 $$
+$$ E[X_n^2] = \sum_{i=1}^n E[Z_i^2] = \sum_{i=1}^n 1 = n $$
+
+
+## 2
+
+This problem set uses 2019 data primarily for Denver county accessed through IPUMS-USA, University of Minnesota, www.ipums.org , 
+
+Steven Ruggles, Sarah Flood, Ronald Goeken, Josiah Grover, Erin Meyer, Jose Pacas and Matthew Sobek. IPUMS USA: Version 7.0 [dataset]. Minneapolis, MN: IPUMS, 2020. 
+https://doi.org/10.18128/D010.V10.0
+
+
+The PUMA-to-county restriction was done using MABLE, http://mcdc.missouri.edu/websas/geocorr12.html
+
+This problem set uses a subsample of demographic data for Denver. 
+
+The sample was drawn according to the values in the variable "perwt". This is a weight value provided by the US Census Bureau to correct for differences between the sampled population and the target population. It is called a sample weight or an expansion weight.  
+
+It can be thought of as the number of people in Colorado that the one observation represents in terms of demographic characteristics. For example, if you add all the weights in the original sample for all of Colorado, you will get an approximation of the population of Colorado in the sample year. If you multiply the "age" variable by "perwt" then divide by the sum of the "perwt" values, you will get an approximation of the average age in the state, whether or not the ages of the cases are present in the same proportion in the sample as in the population.
+
+Thus a sample drawn using "perwt" as the probability will be a better approximation of the population than a simple random sample in which each case has an equal likelihood of being selected.
+
+The category "educ"=7 corresponds to 1 year of college. The category "educ"=10 corresponds to 4 years of college.
+
+Samples of size 40 are drawn from the responses with "educ"=7 and with "educ"=10 according to the weights in the data set and saved in "dat_7_10.RData".
+
+
+### IPUMS Data
+
+Read in the subsample of the IPUMS data.
+
+```{r}
+load("dat_7_10.RData")
+```
+
+### 2.a
+
+(10 points)
+
+Please run and interpret a Mann-Whitney U test comparing "incwage" for the observations with "educ" equal to 7 and with "educ" equal to 10. In your interpretation, please consider the case in which you treat the distributions of the two populations as related by translation and the case in which you don't make this assumption.
+
+```{r}
+ggplot(dat.7.10,aes(x=incwage,color=factor(educ)))+geom_density()
+
+wilcox.test(incwage~educ,dat.7.10)
+```
+### P-value is very small. We can reject the null hypothesis in favor of the alternative hypothesis. 
+
+
+### 2.b
+
+(10 points)
+
+Please run a Mann-Whitney U test comparing log(incwage) for the observations with "educ" equal to 7 and with "educ" equal to 10 and compare to the result in part a. Please explain what you observe about the two tests.
+
+```{r}
+wilcox.test(log(incwage)~educ,dat.7.10)
+```
+### There is no difference between the two. The p-values are the same.
+
+## 3
+
+The raw data in this question is the “Pew Research Center’s American Trends Panel” Wave 69 
+Field dates: June 16 – June 22, 2020
+Topics: Coronavirus tracking, politics, 2020 Census
+data and questionnaire 
+downloaded 3/4/2021 from https://www.pewresearch.org/politics/dataset/american-trends-panel-wave-69/
+
+The codebook was downloaded 3/5/2021 from https://www.pewresearch.org/wp-content/uploads/2018/05/Codebook-and-instructions-for-working-with-ATP-data.pdf 
+
+The Pew Research Center provides sample weights in the variable "WEIGHT_W69". These serve a similar purpose to the "perwt" variable in the IPUMS data, though these wieghts have the effect of readjusting the proportions of demographic groups in the sample to be approximately the proportions in the target population when the responses are viewed as representing the number of people given by the weight. The weights add up to the number of responses in the study.
+
+The code below draws a sample from the full response set with probability based on the weight. Please use "dat.sub" in the questions below. The data frame "dat.sub" is provided with the assignment.
+
+```{r}
+# dat.pew<-data.frame(read.spss("W69_Jun20/ATP W69.sav"))
+# sum(dat.pew$WEIGHT_W69)
+# set.seed(1234)
+# sub.index<-sample(1:nrow(dat.pew),200,prob = dat.pew$WEIGHT_W69)
+# dat.sub<-dat.pew[sub.index,]
+# save(dat.sub,file="dat_sub.RData")
+load("dat_sub.RData")
+```
+
+The code below generates a contingency table for the answers to the question "How much of a problem do you think each of the following are in the country today?" applied to the coronavirus outbreak by the age category of the respondent. The respondents who refused to supply their age or an answer to the question are omitted.
+
+For intuition, the percent within each age range selecting each response is shown.
+
+If you would prefer to investigate the independence of another pair of variables, you may generate your own contingency table and base your answers to 3.a and 3.b on your own table. 
+
+```{r}
+t<-table(dat.sub$F_AGECAT,dat.sub$NATPROBS_b_W69)
+t<-t[1:4,1:4] # Drop the "Refused" row and column
+
+round(100*t/rowSums(t),0)
+```
+
+### 3.a
+
+(10 points)
+
+Please use the $\chi^2$ test to test the independence of the probability distribution with the outcomes in the rows and the probability distribution with the outcomes in the columns for the table you chose. Is this an appropriate test for your table? If not, why not? If so, please respond to the question of whether the data are consistent with the null hypothesis that the row distribution and the column distribution are independent.
+
+```{r}
+chisq.test(t)
+```
+### This is not an appropriate test. According to the guidelines presented in the async lectures, the expected value should be at least 5.
+
+
+### 3.b
+
+(10 points)
+
+Please use Fisher's exact test to test the independence of the probability distribution with the outcomes in the rows and the probability distribution with the outcomes in the columns for the table you chose. Is this an appropriate test for your table? If not, why not? If so, please respond to the question of whether the data are consistent with the null hypothesis that the row distribution and the column distribution are independent. (Setting cache=TRUE means that the code in the block will not be reevaluated on subsequent "knit" applications unless the code in the block is changed. This speeds up text editing once the calculations are in place, but shouldn't be used before than because the calculations won't be updated to reflect changes elsewhere.)
+
+```{r cache=TRUE }
+fisher.test(t)# can be slow
+
+```
+### This is an appropriate test. It gives us strong evidence against the null hypothesis.
+

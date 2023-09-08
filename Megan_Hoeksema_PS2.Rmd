@@ -1,0 +1,292 @@
+---
+title: "Problem Set 2"
+author: "Megan Hoeksema"
+output:
+  word_document: default
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+These questions were rendered in R markdown through RStudio (<https://urldefense.com/v3/__https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf__;!!NCZxaNi9jForCP_SxBKJCA!Ca08b5NQZfvAu6v0RzkstRTPrXDXwDinjNj0uVYwQrXJdYd24oveKvHxwiWG6loMfYWG$ >, <https://urldefense.com/v3/__http://rmarkdown.rstudio.com__;!!NCZxaNi9jForCP_SxBKJCA!Ca08b5NQZfvAu6v0RzkstRTPrXDXwDinjNj0uVYwQrXJdYd24oveKvHxwiWG6ms_4QRX$ > ).
+
+Please complete the following tasks regarding the data in R. Please generate a solution document in R markdown and upload the .Rmd document and a rendered  .doc, .docx, or .pdf document. Your solution document should have your answers to the questions and should display the requested plots.
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+```
+
+## Large and Small Samples
+
+The relationship between a sample and the population from which it is drawn depends on the size of the sample. This feature underlies the need for sufficiently large samples in order to run meaningful statistical analyses.
+
+
+### Question 1
+
+Please draw a random sample of 100,000 values from the Poisson distribution with $\lambda=4$ using the random seed 7654321. Present a histogram of the results with a density scale using the techniques in "Discrete_Probability_Distributions_2_3_3.Rmd" or "continuous_probability_distributions_2_4_2.Rmd". You may find a bin width of 1 helpful. Separately, please draw 100 values from the Poisson distribution with $\lambda=4$ using the random seed 7654321 and present a histogram of the results with a density scale.(5 points) 
+
+```{r}
+set.seed(7654321)
+samp <- rpois(100000,4) 
+dat<-data.frame((val=samp))
+myplot<-ggplot(data=dat,aes(x=val))+geom_histogram(aes(y=stat(density)), binwidth = 1)
+myplot
+
+set.seed(7654321)
+samp.smaller<-rpois(100, 4)
+dat.smaller<-data.frame(val=samp.smaller)
+myplot.smaller<-ggplot(data=dat.smaller, aes(x=val)) + geom_histogram(aes(y=stat(density)),binwidth = 1)
+myplot.smaller
+
+```
+
+### Question 2
+
+Please generate a visualization that compares the proportions each of the possible outcomes in the sample of size 100,000 above to the theoretical probabilities of each of the outcomes for the Poisson distribution with $\lambda=4$. Repeat for the sample of size 100. For which sample size are the proportions of each outcome more similar to the probabilities given by the density function of the Poisson distribution with $\lambda=4$? (5 points)
+
+```{r}
+in.theory<-data.frame(x=0:max(samp))
+in.theory$y<-dpois(in.theory$x,lambda = 4)
+
+my.plot.better<-myplot+geom_point(data=in.theory,aes(x=x,y=y))
+my.plot.better
+
+my.plot.smaller.better<-myplot.smaller+geom_point(data=in.theory,aes(x=x,y=y))
+my.plot.smaller.better
+
+```
+
+
+
+## Normal Approximations
+
+Many statistical methods involve approximation of a distribution by a Normal distribution. Questions 3 through 5 are intended to build intuition for when this is reasonable. The questions work toward visually assessing the quality of Normal approximations to several distributions. 
+
+The issue of the value of "mean" and the value of "sd" to use in a Normal approximation will be handled by use of the interquartile range, defined below. (There are other approaches that that depend on sample mean and variance and the mean and variance of the Normal distribution, concepts covered later in the course.) 
+
+### Question 3
+
+Approximately, the $p^{th}$ quantile of a set $S$ of $n$ numerical values is the value $s_p$ such that the proportion of values in $S$ that are less than or equal to $s_p$ equals $p$. This concept may be familiar from the idea of the $95^{th}$ percentile. There are complications arising from the fact that there may not be a value $s_p$ for which the proportion exactly equals $p$. The "quantile" function in R defaults to one approach to addressing this. The default is acceptable for these exercises.
+
+The **first quartile** of $S$ is the value $s_{0.25}$.
+
+The **third quartile** of $S$ is the value $s_{0.75}$.
+
+The **median** of $S$ is the value $s_{0.5}$.
+
+The **interquartile range** of $S$ is the value $s_{0.75}-s_{0.25}$.
+
+Given a data set with known values for the median and the interquartile range, one can calculate values of $\mu$ and $\sigma$ such that the Normal distribution $Normal(\mu,\sigma^2)$ has the same median and interquartile range. This gives a way to select a Normal distribution approximating the data set.
+
+The results of this exercise will be used in the next exercise identify Normal distributions that are reasonable approximations to simulated data sets.
+
+#### Question 3.a
+
+By analogy, for a random variable with cumulative density function $F$, let $x_{p}$ satisfy $F\left(x_{p}\right)=p$.
+
+The **first quartile** of the random variable is the value $x_{0.25}$.
+
+The **third quartile** of the random variable is the value $x_{0.75}$.
+
+The **median** of the random variable is the value $x_{0.5}$.
+
+The **interquartile range** of the random variable is the value $x_{0.75}-x_{0.25}$.
+
+Please calculate the values of $x_{0.75}$ for the Normal distributions with mean 0 and sd in ${1,2,3,...10}$ and plot the points consisting of the value of the sd and the corresponding $x_{0.75}$. This should give an indication of a simple function relating sd and $x_{0.75}$.(5 points)
+
+```{r}
+sigmas<-1:10
+w<-qnorm(0.75, sd=1:10)
+
+dat<-data.frame(sigma=sigmas, w2=qnorm(0.75, sd=1:10))
+qplot(dat$sigma, dat$w2)
+
+qnorm(0.90)
+qnorm(0.1)
+
+qnorm(0.75, 10)
+```
+
+
+#### Question 3.b
+
+Denote by $z_p$ the value such that $p=\int_{-\infty}^{z_p}\frac{1}{\sqrt{2\pi}}e^{\frac{-u^2}{2 }}du$. Denote by $w_p$ the value such that $p=\int_{-\infty}^{w_p}\frac{1}{\sqrt{2\pi\sigma^2}}e^{\frac{-\left(x-\mu\right)^2}{2 \sigma^2}}dx$.
+
+Thus $$\int_{-\infty}^{z_p}\frac{1}{\sqrt{2\pi}}e^{\frac{-u^2}{2 }}du=\int_{-\infty}^{w_p}\frac{1}{\sqrt{2\pi\sigma^2}}e^{\frac{-\left(x-\mu\right)^2}{2 \sigma^2}}dx$$
+
+Note that the change of variable $u=\frac{x-\mu}{\sigma}$ transforms the integrand of the integral on the right hand side of the equality to equal the integrand of the integral on the left hand side. Please use this change of variable applied carefully to the limits of integration to give a formula for $z_{p}$ in terms of $w_p$, $\mu$, and $\sigma$. (5 points)
+
+$$z_p = \frac{w_p - \mu}{\sigma}$$
+
+
+#### Question 3.c
+
+Please give a formula for $w_{0.25}$ in terms of $\mu$, $\sigma$, and $z_{0.25}$.
+$$w_{0.25} = \sigma z_{0.25} + \mu$$
+
+Please give a formula for $w_{0.75}$ in terms of $\mu$, $\sigma$, and $z_{0.75}$.
+$$w_{0.75} = \sigma z_{0.75} + \mu$$ 
+
+Please give a formula for $w_{0.5}$ in terms of $\mu$.
+$$w_{0.5} = \mu$$
+
+Please give a formula for $w_{0.75}-w_{0.25}$ in terms of $\sigma$, and $z_{0.75}$.
+$$w_{0.75-0.25} = 2 \sigma z_{0.75}$$
+
+Please use the results of 3.b to address these questions.
+(5 points)
+
+
+#### Question 3.d
+
+Suppose a data set has median equal to $m$ and interquartile range equal to $q$. What values of $\mu$ and $\sigma$ result in a random variable $Normal(\mu,\sigma^2)$ with the same median and interquartile range? Please use $z_{0.75}$ in your solution. The symmetry of the standard Normal density function implies that $z_{0.25}=-z_{0.75}$. (5 points)
+
+$$\mu = m$$ 
+$$q = 2 \sigma z_{0.75}$$
+$$\sigma = \frac{q}{2z_{0.75}}$$
+
+
+
+### Question 4
+
+Many methods in statistics assume that data are samples from a Normal distribution. This question and Question 5 investigate how (nearly) Normal distributions can arise from means of samples from non-Normal distributions. 
+
+Consider the gamma random variables plotted below.
+
+```{r}
+dat.plot<-data.frame(x=c(0,5))
+ggplot(dat.plot,aes(x=x))+
+  stat_function(fun=dgamma,args=list(shape=1,scale=2))+
+  stat_function(fun=dgamma,args=list(shape=2,scale=.5),color="orange")+
+  stat_function(fun=dgamma,args=list(shape=8,scale=.125),color="blue")
+
+```
+
+The following code generates 100,000 means of samples of size 2, 5, and 20 from each of the gamma distributions, plots the histograms of each set of 100,000 means, and overlays the histogram with the Normal distribution having the same median and interquartile range as the set of 100,000 means.
+
+Create a data frame of the parameters for each set of 100,000 means.
+
+```{r}
+
+ns<-rep(c(2,5,20),times=c(3,3,3))
+shapes<-rep(c(1,2,8),times=3)
+scales<-rep(c(2,.5,.125),times=3)
+
+dat.params<-data.frame(ns,shapes,scales)
+```
+
+Create a matrix of "val.mat" of NA's with 100,000 rows and a column for the means of samples of size=2, shape=1, scale=2; size=5, shape=2, scale=.5;...size=20, shape=8, scale=0.125.
+
+```{r}
+val.mat<-matrix(rep(NA,100000*nrow(dat.params)),
+                ncol=nrow(dat.params))
+```
+
+Populate the matrix by stepping through the rows of the data frame of parameters for the 100,000 means.
+
+```{r cache=TRUE}
+set.seed(123456)
+for(i in 1:nrow(dat.params)){
+  # Generate a matrix with 100,000 rows of n  
+  # random values from a gamma distribution where the value of n
+  # and of the shape and scale of the gamma distribution come from the 
+  # ith row of dat.params.
+  samp.mat<-matrix(rgamma(dat.params$ns[i]*100000,dat.params$shapes[i],
+                          dat.params$scales[i]),nrow=100000)
+  # take the mean of each row and store the result in val.mat
+  val.mat[,i]=apply(samp.mat,1,mean)
+}
+```
+
+Write a function that takes a numeric vector x as its argument and returns the median and interquartile range of the values in x. 
+
+```{r}
+val.stats<-function(x){
+  return(c(median(x),quantile(x,.75)-quantile(x,.25)))
+}
+```
+
+Apply this to the columns of the matrix of means of samples to get a $2\times9$ matrix "params" where the columns correspond to the columns of the $100,000\times9$ matrix "val.mat", the first row is the medians of the corresponding columns, and the second row is the interquartile ranges of the corresponding columns.
+
+```{r}
+params<-apply(val.mat,2,val.stats)
+```
+
+Step through the columns of "val.mat" making a density histogram of the values in the column with the density curve of the Normal distribution having the same median and interquartile range as the values in the column. Note that the median aad interquartile range for the column are in the corresponding column of "params". 
+
+```{r}
+for(i in 1:ncol(val.mat)){
+  dat.temp<-data.frame(x=val.mat[,i])
+  g<-ggplot(dat.temp,aes(x=x))+
+    geom_histogram(aes(y=stat(density)),bins=50)+
+    labs(title=str_c("n=",dat.params$ns[i],", shape=",
+                     dat.params$shapes[i],
+                     ", scale=",round(dat.params$scales[i],2)))+
+    stat_function(fun=dnorm,args=list(mean=params[1,i],
+                          sd=params[2,i]/(2*qnorm(.75))))
+  print(g)
+}
+
+
+
+```
+
+Please comment on the visual resemblance between the histograms and the corresponding Normal distribution. Qualitatively, how does the degree of resemblance depend on the number of terms in the sample? Qualitatively, how does degree of resemblance depend on distribution of terms in the sample? (5 points)
+  
+  ### MDH Comment:  All of the histograms seem to represent a normal distribution however less so for both the n=2, shape = 1 ,scale = 1 and n=2, shape = 2, scale = 0.5. The degree of resemblence is increasingly better as the number of terms in the sample increases. The degree of resemblence improves as the distribution of terms becomes more equivalent.
+
+
+### Question 5 
+
+This question revisits the issue of how (nearly) Normal distributions can arise from means of samples from non-Normal distributions. 
+
+In particular, this question looks at probability spaces $(S,M,P)_p$ for $p\in[0,1]$ where $S=\{0,1\}$, $M=\mathcal{P}(S)$ and $P$ is defined by the density $f:S\rightarrow\mathbb{R}$ by $f(1)=p$ and $f(0)=1-p$. 
+
+#### Question 5.a
+
+For each pair $(n,p)$ with $n\in\{10,50,1000\}$ and $p\in\{.5,.1,.01\}$, sample 100,000 values of the mean of $n$ samples from $(S,M,P)_p$ and plot the density histogram of the 100,000 values. If the interquartile range for the 100,000 values for that $(n,p)$ is nonzero, also include the density function of the Normal distribution having the same median and interquartile range as the 100,000 values in the plot. You may gain efficiency by relating the means of the samples of $n$ values from $(S,M,P)_p$ to the binomial distribution with size $n$ and probability of success $p$. Also, a bin width equal to $\frac{1}{n}$ is appropriate because the means take on values $\left\{\frac{0}{n},\frac{1}{n},\frac{2}{n},...\frac{n}{n}\right\}$(10 points)
+
+```{r}
+ns<-c(10,50,1000)
+ps<-c(.5,.1,.01)
+dat.samp<-data.frame(ns=rep(ns,times=rep(length(ps), length(ns))),ps=rep(ps,times=length(ns)))
+
+set.seed(7899)
+val.mat2<-matrix(rep(NA,100000*nrow(dat.samp)),ncol=nrow(dat.samp))
+
+for(i in 1:nrow(dat.samp)){
+  val.mat2[,i]<-rbinom(100000,dat.samp$ns[i],dat.samp$ps[i])/dat.samp$ns[i]
+}
+
+m.iqr<-apply(val.mat2,2,val.stats)
+
+for(i in 1:ncol(m.iqr)){
+  dat.temp<-data.frame(val=val.mat2[,i])
+    
+    g <- ggplot(dat.temp,aes(x=val))
+    g<-g+geom_histogram(aes(y=stat(density)), binwidth = 1/dat.samp$ns[i])
+    g<-g+labs(title=str_c("n=",dat.samp$ns[i],", p=",dat.samp$ps[i]))
+    if(m.iqr[2,i]>0){
+      g<-g+stat_function(fun=dnorm, colour='red', args = list(mean = m.iqr[1,i], sd = m.iqr[2,i]/(2*qnorm(0.75))))
+    }
+    print(g)
+  }
+
+```
+
+#### Question 5.b
+
+Please comment on the visual resemblance between the histograms and the corresponding Normal distribution. Qualitatively, how does the degree of resemblance depend on the number of terms $n$ in the sample? Qualitatively, how does degree of resemblance depend on $p$? (5 points)
+
+    ### MDH Comment: The degree of resemblence gets better as the number of terms increases, however, as p gets smaller, the degree of resemblence gets worse. 
+
+
+
+
+
+
+
+
+
+
